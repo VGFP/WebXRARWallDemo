@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js sample code</title>
+
+    <!-- Babylon.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://assets.babylonjs.com/generated/Assets.js"></script>
+    <script src="https://cdn.babylonjs.com/recast.js"></script>
+    <script src="https://cdn.babylonjs.com/ammo.js"></script>
+    <script src="https://cdn.babylonjs.com/havok/HavokPhysics_umd.js"></script>
+    <script src="https://cdn.babylonjs.com/cannon.js"></script>
+    <script src="https://cdn.babylonjs.com/Oimo.js"></script>
+    <script src="https://cdn.babylonjs.com/earcut.min.js"></script>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://cdn.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://cdn.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://cdn.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+    <style>
+      html,
+      body {
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      #canvasZone {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="canvasZone"><canvas id="renderCanvas"></canvas></div>
+    <script>
+      var canvas = document.getElementById("renderCanvas");
+      var engine = new BABYLON.Engine(canvas, true);
+
+      // Create scene A
+      var createSceneA = function () {
+        var scene = new BABYLON.Scene(engine);
+        scene.clearColor = new BABYLON.Color4(0, 0, 0, 0); // Transparent background
+
+        var mainTextureUrl =
+          "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/4k_makemake_fictional.jpg";
+        var normalMapUrl =
+          "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/normal_map.png";
+        var specularMapUrl =
+          "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/specular_map.png";
+        var backgroundUrl =
+          "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/8k_stars_milky_way.png";
+
+        // Load textures from S3 URLs
+        var mainTexture = new BABYLON.Texture(mainTextureUrl, scene);
+        var normalMap = new BABYLON.Texture(normalMapUrl, scene);
+        var specularMap = new BABYLON.Texture(specularMapUrl, scene);
+
+        var camera = new BABYLON.ArcRotateCamera(
+          "Camera",
+          Math.PI / 2,
+          Math.PI / 2,
+          5,
+          BABYLON.Vector3.Zero(),
+          scene
+        );
+        camera.detachControl(canvas);
+
+        var light = new BABYLON.HemisphericLight(
+          "light1",
+          new BABYLON.Vector3(0, 0, 0),
+          scene
+        );
+        light.intensity = 0.7;
+
+        var sphere = BABYLON.Mesh.CreateSphere("sphere1", 32, 4, scene);
+        sphere.position.y = -1;
+        sphere.position.x = 5;
+        sphere.position.z = -2;
+
+        var axis = new BABYLON.Vector3(1, 0, 0);
+        var angle = 0.0005; // The angle of rotation
+
+        // Register a function to execute after each render
+        scene.registerAfterRender(function () {
+          sphere.rotate(axis, angle, BABYLON.Space.LOCAL);
+        });
+
+        // Create a standard material and assign the textures
+        var material = new BABYLON.StandardMaterial("material", scene);
+        material.diffuseTexture = mainTexture;
+        material.specularTexture = specularMap;
+        material.bumpTexture = normalMap;
+
+        // Apply the material to the sphere
+        sphere.material = material;
+
+        var arc = BABYLON.MeshBuilder.CreateSphere(
+          "arc",
+          {
+            segments: 16,
+            diameter: 100,
+          },
+          scene
+        );
+        arc.position.y = 1;
+        var skyboxMaterial = new BABYLON.StandardMaterial(
+          "skyBoxMaterial",
+          scene
+        );
+
+        skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+        skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+        skyboxMaterial.backFaceCulling = false;
+
+        skyboxMaterial.reflectionTexture = new BABYLON.Texture(
+          backgroundUrl,
+          scene
+        );
+        skyboxMaterial.reflectionTexture.coordinatesMode =
+          BABYLON.Texture.FIXED_EQUIRECTANGULAR_MODE; // For equirectangular images
+
+        arc.material = skyboxMaterial;
+
+        return scene;
+      };
+
+
+      // Create scene B
+      var createSceneB = function () {
+        var scene = new BABYLON.Scene(engine);
+
+        var camera = new BABYLON.FreeCamera(
+          "Camera",
+          BABYLON.Vector3.Zero(),
+          scene
+        );
+        camera.attachControl(canvas, true);
+
+        camera.position.x = 0;
+        camera.position.y = 1;
+
+        camera.rotation.y -=  Math.PI/2
+
+
+        BABYLON.SceneLoader.Append(
+          "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/",
+          "spaceship_corridor_v2.glb",
+          scene,
+          function (scene) {}
+        );
+
+        var light = new BABYLON.HemisphericLight(
+          "light1",
+          new BABYLON.Vector3(1, 1, 0),
+          scene
+        );
+        light.intensity = 0.3;
+
+        scene.createDefaultXRExperienceAsync({
+            uiOptions: {
+                sessionMode: 'immersive-ar'
+            }
+        });
+
+        return scene;
+      };
+      var sceneA = createSceneA();
+      var sceneB = createSceneB();
+
+      // Create render target texture
+      var renderTargetTexture = new BABYLON.RenderTargetTexture(
+        "renderTexture",
+        1024,
+        sceneA,
+        true
+      );
+      sceneA.customRenderTargets.push(renderTargetTexture);
+
+      // Add sphere to render list
+      var sphere = sceneA.getMeshByName("sphere1");
+      var arc = sceneA.getMeshByName("arc");
+
+      renderTargetTexture.renderList.push(sphere);
+      renderTargetTexture.renderList.push(arc);
+
+      // Apply texture to a material in scene B
+      var ground = sceneB.getMeshByName("ground1");
+      var groundMaterial = new BABYLON.StandardMaterial("groundMat", sceneB);
+
+      groundMaterial.diffuseTexture = renderTargetTexture;
+
+      // Wait for scene B to be loaded
+      sceneB.executeWhenReady(function () {
+        sceneB.meshes.forEach(function (mesh) {
+          if (mesh.name === "WindowPlane") {
+            mesh.material = groundMaterial;
+          }
+        });
+      });
+
+      // Render loop
+      engine.runRenderLoop(function () {
+        sceneA.render();
+        sceneB.render();
+      });
+
+      // Resize event
+      window.addEventListener("resize", function () {
+        engine.resize();
+      });
+
+      var startRenderLoop = function (engine, canvas) {
+        engine.runRenderLoop(function () {
+          if (sceneToRender && sceneToRender.activeCamera) {
+            sceneToRender.render();
+          }
+        });
+      };
+    </script>
+  </body>
+</html>
