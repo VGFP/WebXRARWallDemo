@@ -221,23 +221,7 @@
                 plane.mesh.rotationQuaternion,
                 plane.mesh.position
               );
-              if (isWindowAdded === false) {
-                BABYLON.SceneLoader.ImportMesh(
-                  "",
-                  "https://example.com/path/to/your/",
-                  "model.glb",
-                  scene,
-                  function (newMeshes) {
-                    // Change the position of the imported mesh
-                    newMeshes.forEach((mesh) => {
-                      mesh.position.x = plane.mesh.position.x;
-                      mesh.position.y = plane.mesh.position.y;
-                      mesh.position.z = plane.mesh.position.z;
-                    });
-                  }
-                );
-                isWindowAdded = true;
-              }
+             
             });
 
             scene.onPointerDown = (evt, pickInfo) => {
@@ -245,6 +229,24 @@
                 // The user has clicked on a mesh
                 let clickedMesh = pickInfo.pickedMesh;
                 console.log("Clicked on mesh: ", clickedMesh.name);
+
+                if (isWindowAdded === false) {
+                  BABYLON.SceneLoader.ImportMesh(
+                    "",
+                    "https://example.com/path/to/your/",
+                    "model.glb",
+                    scene,
+                    function (newMeshes) {
+                      // Change the position of the imported mesh
+                      newMeshes.forEach((mesh) => {
+                        mesh.position.x = clickedMesh.mesh.position.x;
+                        mesh.position.y = clickedMesh.mesh.position.y;
+                        mesh.position.z = clickedMesh.mesh.position.z;
+                      });
+                    }
+                  );
+                  isWindowAdded = true;
+                }
             
                 // Additional logic here, if needed
                 // For example, changing the color of the clicked mesh
