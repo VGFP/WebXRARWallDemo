@@ -154,14 +154,14 @@
         camera.position.y = 1.5;
 
         camera.rotation.y -= Math.PI / 2;
-
+        /*
         BABYLON.SceneLoader.Append(
           "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/",
           "spaceship_corridor_v2.glb",
           scene,
           function (scene) {}
         );
-
+        */
         var light = new BABYLON.HemisphericLight(
           "light1",
           new BABYLON.Vector3(1, 1, 0),
@@ -233,8 +233,8 @@
                 if (isWindowAdded === false) {
                   BABYLON.SceneLoader.ImportMesh(
                     "",
-                    "https://example.com/path/to/your/",
-                    "model.glb",
+                    "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/",
+                    "spaceship_corridor_v2.glb",
                     scene,
                     function (newMeshes) {
                       // Change the position of the imported mesh
