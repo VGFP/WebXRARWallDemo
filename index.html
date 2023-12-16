@@ -207,13 +207,13 @@
               var polygon = polygon_triangulation.build(false, 0.01);
               plane.mesh = polygon;
               planes[plane.id] = plane.mesh;
- 
+
               const mat = new BABYLON.StandardMaterial("mat", scene);
               mat.alpha = 0.9;
               mat.diffuseColor = BABYLON.Color3.Random();
               polygon.createNormals();
               // polygon.receiveShadows = true;
-              plane.mesh.material = mat; 
+              plane.mesh.material = mat;
 
               plane.mesh.rotationQuaternion = new BABYLON.Quaternion();
               plane.transformationMatrix.decompose(
@@ -221,7 +221,6 @@
                 plane.mesh.rotationQuaternion,
                 plane.mesh.position
               );
-             
             });
 
             scene.onPointerDown = (evt, pickInfo) => {
@@ -231,29 +230,39 @@
                 console.log("Clicked on mesh: ", clickedMesh.name);
 
                 if (isWindowAdded === false) {
-                  BABYLON.SceneLoader.ImportMesh(
-                    "",
-                    "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/",
-                    "spaceship_corridor_v2.glb",
-                    scene,
-                    function (newMeshes) {
-                      // Change the position of the imported mesh
-                      newMeshes.forEach((mesh) => {
-                        mesh.position.x = clickedMesh.mesh.position.x;
-                        mesh.position.y = clickedMesh.mesh.position.y;
-                        mesh.position.z = clickedMesh.mesh.position.z;
-                      });
-                    }
-                  );
-                  isWindowAdded = true;
+                  const rotation = mesh.rotationQuaternion
+                    ? mesh.rotationQuaternion.toEulerAngles()
+                    : mesh.rotation;
+
+                  // Assuming a wall has a rotation around the Y axis (vertical)
+                  // Adjust these conditions based on your specific use case
+                  if (
+                    Math.abs(rotation.x) < Math.PI / 4 &&
+                    Math.abs(rotation.z) < Math.PI / 4
+                  ) {
+                    BABYLON.SceneLoader.ImportMesh(
+                      "",
+                      "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/",
+                      "spaceship_corridor_v2.glb",
+                      scene,
+                      function (newMeshes) {
+                        // Change the position of the imported mesh
+                        newMeshes.forEach((mesh) => {
+                          // mesh.rotation.x = clickedMesh.mesh.rotation.x;
+                          mesh.rotation.y = clickedMesh.mesh.rotation.y;
+                          // mesh.rotation.z = clickedMesh.mesh.rotation.z;
+                        });
+                      }
+                    );
+                    isWindowAdded = true;
+                  }
                 }
-            
+
                 // Additional logic here, if needed
                 // For example, changing the color of the clicked mesh
                 clickedMesh.material.diffuseColor = BABYLON.Color3.Green();
               }
             };
-            
 
             xrPlanes.onPlaneUpdatedObservable.add((plane) => {
               let mat;
