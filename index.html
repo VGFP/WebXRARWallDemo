@@ -139,7 +139,6 @@
         return scene;
       };
 
-
       // Create scene B
       var createSceneB = function () {
         var scene = new BABYLON.Scene(engine);
@@ -151,11 +150,10 @@
         );
         camera.attachControl(canvas, true);
 
-        camera.position.x = 0;
-        camera.position.y = 1;
+        camera.position.x = 1;
+        camera.position.y = 1.5;
 
-        camera.rotation.y -=  Math.PI/2
-
+        camera.rotation.y -= Math.PI / 2;
 
         BABYLON.SceneLoader.Append(
           "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/",
@@ -171,11 +169,123 @@
         );
         light.intensity = 0.3;
 
-        scene.createDefaultXRExperienceAsync({
+        scene
+          .createDefaultXRExperienceAsync({
             uiOptions: {
-                sessionMode: 'immersive-ar'
-            }
-        });
+              sessionMode: "immersive-ar",
+            },
+          })
+          .then((xr) => {
+            var isWindowAdded = false;
+
+            const fm = xr.baseExperience.featuresManager;
+
+            const xrTest = fm.enableFeature(
+              BABYLON.WebXRHitTest.Name,
+              "latest"
+            );
+            const xrPlanes = fm.enableFeature(
+              BABYLON.WebXRPlaneDetector.Name,
+              "latest"
+            );
+            const anchors = fm.enableFeature(
+              BABYLON.WebXRAnchorSystem.Name,
+              "latest"
+            );
+
+            const planes = [];
+
+            xrPlanes.onPlaneAddedObservable.add((plane) => {
+              plane.polygonDefinition.push(plane.polygonDefinition[0]);
+              var polygon_triangulation = new BABYLON.PolygonMeshBuilder(
+                "name",
+                plane.polygonDefinition.map(
+                  (p) => new BABYLON.Vector2(p.x, p.z)
+                ),
+                scene
+              );
+              var polygon = polygon_triangulation.build(false, 0.01);
+              plane.mesh = polygon;
+              planes[plane.id] = plane.mesh;
+              const mat = new BABYLON.StandardMaterial("mat", scene);
+              mat.alpha = 0.9;
+              mat.diffuseColor = BABYLON.Color3.Random();
+              polygon.createNormals();
+              // polygon.receiveShadows = true;
+              plane.mesh.material = mat;
+
+              plane.mesh.rotationQuaternion = new BABYLON.Quaternion();
+              plane.transformationMatrix.decompose(
+                plane.mesh.scaling,
+                plane.mesh.rotationQuaternion,
+                plane.mesh.position
+              );
+              if (isWindowAdded === false) {
+                BABYLON.SceneLoader.ImportMesh(
+                  "",
+                  "https://example.com/path/to/your/",
+                  "model.glb",
+                  scene,
+                  function (newMeshes) {
+                    // Set the target of the camera to the first imported mesh
+                    camera.target = newMeshes[0];
+
+                    // Change the position of the imported mesh
+                    newMeshes.forEach((mesh) => {
+                      mesh.position.x = plane.mesh.position.x;
+                      mesh.position.y = plane.mesh.position.y;
+                      mesh.position.z = plane.mesh.position.z;
+                    });
+                  }
+                );
+                isWindowAdded = true;
+              }
+            });
+
+            xrPlanes.onPlaneUpdatedObservable.add((plane) => {
+              let mat;
+              if (plane.mesh) {
+                mat = plane.mesh.material;
+                plane.mesh.dispose(false, false);
+              }
+              const some = plane.polygonDefinition.some((p) => !p);
+              if (some) {
+                return;
+              }
+              plane.polygonDefinition.push(plane.polygonDefinition[0]);
+              var polygon_triangulation = new BABYLON.PolygonMeshBuilder(
+                "name",
+                plane.polygonDefinition.map(
+                  (p) => new BABYLON.Vector2(p.x, p.z)
+                ),
+                scene
+              );
+              var polygon = polygon_triangulation.build(false, 0.01);
+              polygon.createNormals();
+              plane.mesh = polygon; // BABYLON.TubeBuilder.CreateTube("tube", { path: plane.polygonDefinition, radius: 0.02, sideOrientation: BABYLON.Mesh.FRONTSIDE, updatable: true }, scene);
+              //}
+              planes[plane.id] = plane.mesh;
+              plane.mesh.material = mat;
+              plane.mesh.rotationQuaternion = new BABYLON.Quaternion();
+              plane.transformationMatrix.decompose(
+                plane.mesh.scaling,
+                plane.mesh.rotationQuaternion,
+                plane.mesh.position
+              );
+              plane.mesh.receiveShadows = true;
+            });
+
+            xrPlanes.onPlaneRemovedObservable.add((plane) => {
+              if (plane && planes[plane.id]) {
+                planes[plane.id].dispose();
+              }
+            });
+
+            xr.baseExperience.sessionManager.onXRSessionInit.add(() => {
+              planes.forEach((plane) => plane.dispose());
+              while (planes.pop()) {}
+            });
+          });
 
         return scene;
       };
