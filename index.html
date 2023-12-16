@@ -207,12 +207,13 @@
               var polygon = polygon_triangulation.build(false, 0.01);
               plane.mesh = polygon;
               planes[plane.id] = plane.mesh;
+ 
               const mat = new BABYLON.StandardMaterial("mat", scene);
               mat.alpha = 0.9;
               mat.diffuseColor = BABYLON.Color3.Random();
               polygon.createNormals();
               // polygon.receiveShadows = true;
-              plane.mesh.material = mat;
+              plane.mesh.material = mat; 
 
               plane.mesh.rotationQuaternion = new BABYLON.Quaternion();
               plane.transformationMatrix.decompose(
@@ -227,9 +228,6 @@
                   "model.glb",
                   scene,
                   function (newMeshes) {
-                    // Set the target of the camera to the first imported mesh
-                    camera.target = newMeshes[0];
-
                     // Change the position of the imported mesh
                     newMeshes.forEach((mesh) => {
                       mesh.position.x = plane.mesh.position.x;
@@ -241,6 +239,19 @@
                 isWindowAdded = true;
               }
             });
+
+            scene.onPointerDown = (evt, pickInfo) => {
+              if (pickInfo.hit && pickInfo.pickedMesh) {
+                // The user has clicked on a mesh
+                let clickedMesh = pickInfo.pickedMesh;
+                console.log("Clicked on mesh: ", clickedMesh.name);
+            
+                // Additional logic here, if needed
+                // For example, changing the color of the clicked mesh
+                clickedMesh.material.diffuseColor = BABYLON.Color3.Green();
+              }
+            };
+            
 
             xrPlanes.onPlaneUpdatedObservable.add((plane) => {
               let mat;
@@ -262,8 +273,8 @@
               );
               var polygon = polygon_triangulation.build(false, 0.01);
               polygon.createNormals();
-              plane.mesh = polygon; // BABYLON.TubeBuilder.CreateTube("tube", { path: plane.polygonDefinition, radius: 0.02, sideOrientation: BABYLON.Mesh.FRONTSIDE, updatable: true }, scene);
-              //}
+              plane.mesh = polygon;
+
               planes[plane.id] = plane.mesh;
               plane.mesh.material = mat;
               plane.mesh.rotationQuaternion = new BABYLON.Quaternion();
