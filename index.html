@@ -139,7 +139,6 @@
         return scene;
       };
 
-
       // Create scene B
       var createSceneB = function () {
         var scene = new BABYLON.Scene(engine);
@@ -154,14 +153,39 @@
         camera.position.x = 0;
         camera.position.y = 1;
 
-        camera.rotation.y -=  Math.PI/2
-
+        camera.rotation.y -= Math.PI / 2;
 
         BABYLON.SceneLoader.Append(
           "https://cdn.statically.io/gh/VGFP/ImmersiveControlVRDemo/main/assets/",
           "spaceship_corridor_v2.glb",
           scene,
-          function (scene) {}
+          function (spaceshipCorridorModel) {
+            // Create Babylon GUI
+            var plane = BABYLON.MeshBuilder.CreatePlane("plane", {});
+            plane.position = new BABYLON.Vector3(0, 1, 1.5);
+            var advancedTexture =
+              BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(plane);
+            var panel = new BABYLON.GUI.StackPanel();
+            advancedTexture.addControl(panel);
+
+            // Create slider
+            var slider = new BABYLON.GUI.Slider();
+            slider.minimum = 0; // Minimum arc value
+            slider.maximum = 2* Math.PI; // Maximum arc value
+            slider.value = arcValue; // Initial value
+            slider.height = "40px";
+            slider.width = "400px";
+            // Change the color of the slider
+            slider.color = "white"; // This will change the color of the thumb
+            slider.background = "gray"; // This will change the color of the bar
+
+            slider.onValueChangedObservable.add(function (value) {
+              if (spaceshipCorridorModel) {
+                // Rotate the model around Y axis
+                spaceshipCorridorModel.rotation.y = value;
+              }
+            });
+          }
         );
 
         var light = new BABYLON.HemisphericLight(
@@ -172,9 +196,9 @@
         light.intensity = 0.3;
 
         scene.createDefaultXRExperienceAsync({
-            uiOptions: {
-                sessionMode: 'immersive-ar'
-            }
+          uiOptions: {
+            sessionMode: "immersive-ar",
+          },
         });
 
         return scene;
